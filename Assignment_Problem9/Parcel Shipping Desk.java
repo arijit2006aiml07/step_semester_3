@@ -1,87 +1,105 @@
 import java.util.Scanner;
 
-interface Insurable {
-    double calculateInsurance(double declaredValue);
-}
-
 abstract class Parcel {
     protected double weight;
     protected double declaredValue;
 
-    public Parcel(double weight, double declaredValue) {
+    Parcel(double weight, double declaredValue) {
         this.weight = weight;
         this.declaredValue = declaredValue;
     }
 
-    public abstract double calculateCharge();
+    abstract double getShippingCharge();
+
+    double getInsurance() {
+        return 0.0;
+    }
+
+    double getTotal() {
+        return getShippingCharge() + getInsurance();
+    }
+}
+
+interface Insurable {
+    double getInsurance();
 }
 
 class StandardParcel extends Parcel {
-    public StandardParcel(double weight, double declaredValue) { super(weight, declaredValue); }
-    @Override
-    public double calculateCharge() {
-        return 40.0 + (10.0 * weight);
+    StandardParcel(double weight, double declaredValue) {
+        super(weight, declaredValue);
+    }
+
+    double getShippingCharge() {
+        return 40 + 10 * weight;
     }
 }
 
 class ExpressParcel extends Parcel implements Insurable {
-    public ExpressParcel(double weight, double declaredValue) { super(weight, declaredValue); }
-    @Override
-    public double calculateCharge() {
-        return 80.0 + (15.0 * weight);
+    ExpressParcel(double weight, double declaredValue) {
+        super(weight, declaredValue);
     }
-    @Override
-    public double calculateInsurance(double declaredValue) {
-        return declaredValue * 0.02;
+
+    double getShippingCharge() {
+        return 80 + 15 * weight;
+    }
+
+    public double getInsurance() {
+        return 0.02 * declaredValue;
     }
 }
 
 class FragileParcel extends Parcel implements Insurable {
-    public FragileParcel(double weight, double declaredValue) { super(weight, declaredValue); }
-    @Override
-    public double calculateCharge() {
-        double standardCharge = 40.0 + (10.0 * weight);
-        return standardCharge + 50.0;
+    FragileParcel(double weight, double declaredValue) {
+        super(weight, declaredValue);
     }
-    @Override
-    public double calculateInsurance(double declaredValue) {
-        return declaredValue * 0.02;
+
+    double getShippingCharge() {
+        return 40 + 10 * weight + 50;
+    }
+
+    public double getInsurance() {
+        return 0.02 * declaredValue;
     }
 }
 
 public class ParcelShippingDesk {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        if (!scanner.hasNextInt()) return;
-        int n = scanner.nextInt();
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
         double grandTotal = 0;
 
         for (int i = 0; i < n; i++) {
-            String type = scanner.next();
-            double weight = scanner.nextDouble();
-            double declaredValue = scanner.nextDouble();
+            String type = sc.next();
+            double weight = sc.nextDouble();
+            double declaredValue = sc.nextDouble();
 
-            Parcel parcel = null;
-            switch (type.toUpperCase()) {
-                case "STANDARD": parcel = new StandardParcel(weight, declaredValue); break;
-                case "EXPRESS": parcel = new ExpressParcel(weight, declaredValue); break;
-                case "FRAGILE": parcel = new FragileParcel(weight, declaredValue); break;
+            Parcel parcel;
+
+            switch (type) {
+                case "STANDARD":
+                    parcel = new StandardParcel(weight, declaredValue);
+                    break;
+                case "EXPRESS":
+                    parcel = new ExpressParcel(weight, declaredValue);
+                    break;
+                case "FRAGILE":
+                    parcel = new FragileParcel(weight, declaredValue);
+                    break;
+                default:
+                    continue;
             }
 
-            if (parcel != null) {
-                double charge = parcel.calculateCharge();
-                double insurance = 0.0;
-                if (parcel instanceof Insurable) {
-                    insurance = ((Insurable) parcel).calculateInsurance(declaredValue);
-                }
-                double total = charge + insurance;
-                grandTotal += total;
+            double charge = parcel.getShippingCharge();
+            double insurance = parcel.getInsurance();
+            double total = parcel.getTotal();
 
-                System.out.printf("%s: Charge=%.2f Insurance=%.2f Total=%.2f\n", 
-                    type.toUpperCase(), charge, insurance, total);
-            }
+            System.out.printf("%s: Charge=%.2f Insurance=%.2f Total=%.2f%n",
+                    type, charge, insurance, total);
+
+            grandTotal += total;
         }
-        System.out.printf("Grand Total: %.2f\n", grandTotal);
-        scanner.close();
+
+        System.out.printf("Grand Total: %.2f%n", grandTotal);
+        sc.close();
     }
 }
